@@ -28,5 +28,9 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.helper.oa</groupId>
+            <artifactId>shiro-config</artifactId>
+        </dependency>
     </dependencies>
 </project>

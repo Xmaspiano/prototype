@@ -16,13 +16,11 @@ public class LoginController {
 
     @RequestMapping("/login")
     public ModelAndView login(){
-        System.out.println("123");
         return new ModelAndView("h_login");
     }
 
     @RequestMapping("/index")
     public ModelAndView index(){
-        System.out.println("3333");
         return new ModelAndView("h_index");
     }
 }

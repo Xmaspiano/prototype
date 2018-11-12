@@ -3,10 +3,10 @@ package com.helper.shiro.config;
 import com.helper.shiro.cache.manager.RedisShiroCacheManager;
 import com.helper.shiro.session.RedisManager;
 import com.helper.shiro.session.ShiroSessionDAO;
+import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.cache.CacheManager;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.AbstractSessionDAO;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
@@ -26,12 +26,13 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 /**
  *
  *
@@ -41,16 +42,8 @@ import java.util.Map;
  * @return
  */
 @Configuration
-@EnableCaching
-@EnableRedisHttpSession
 public class HelperShiroConfiguration{
     private static final Logger LOGGER = LoggerFactory.getLogger(HelperShiroConfiguration.class);
-
-//    @Autowired
-//    RedisConnectionFactory redisConnectionFactory;
-//
-//    @Autowired
-//    RedisCacheManager redisCacheManager;
 
     @Bean
     @ConditionalOnMissingBean(ShiroFilterFactoryBean.class)
@@ -75,15 +68,16 @@ public class HelperShiroConfiguration{
      * @return
      */
     @Bean
-    @ConditionalOnMissingBean(HashedCredentialsMatcher.class)
-    public HashedCredentialsMatcher hashedCredentialsMatcher() {
-        System.out.println("HelperShiroConfiguration[hashedCredentialsMatcher]");
-        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
-        //散列算法:这里使用MD5算法;
-        hashedCredentialsMatcher.setHashAlgorithmName("md5");
-        //散列的次数，比如散列两次，相当于 md5(md5(""));
-        hashedCredentialsMatcher.setHashIterations(2);
-        return hashedCredentialsMatcher;
+    @ConditionalOnMissingBean(CredentialsMatcher.class)
+    public CredentialsMatcher hashedCredentialsMatcher() {
+//        System.out.println("HelperShiroConfiguration[hashedCredentialsMatcher]");
+//        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
+//        //散列算法:这里使用MD5算法;
+//        hashedCredentialsMatcher.setHashAlgorithmName("md5");
+//        //散列的次数，比如散列两次，相当于 md5(md5(""));
+//        hashedCredentialsMatcher.setHashIterations(2);
+//        return hashedCredentialsMatcher;
+        return new MyCredentialsMatcher();
     }
 
 
@@ -174,10 +168,12 @@ public class HelperShiroConfiguration{
      * 使用的是shiro-redis开源插件
      */
     @Bean
-    @ConditionalOnMissingBean(AbstractSessionDAO.class)
+    @ConditionalOnMissingBean(ShiroSessionDAO.class)
     public ShiroSessionDAO shiroSessionDAO() {
         System.out.println("HelperShiroConfiguration[shiroSessionDAO]");
         ShiroSessionDAO shiroSessionDAO = new ShiroSessionDAO(redisManager());
+//        shiroSessionDAO.setCacheManager(shiroCacheManager());
+//        shiroSessionDAO.setCacheManager(shiroCacheManager());
         return shiroSessionDAO;
     }
 
@@ -189,10 +185,17 @@ public class HelperShiroConfiguration{
     }
 
     @Bean
-    @ConditionalOnMissingBean(RedisConnectionFactory.class)
-    public RedisConnectionFactory connectionFactory() {
+    @ConditionalOnMissingBean(JedisConnectionFactory.class)
+    public JedisConnectionFactory connectionFactory() {
         System.out.println("HelperShiroConfiguration[connectionFactory]");
-        return new JedisConnectionFactory(new RedisStandaloneConfiguration());
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfiguration = JedisClientConfiguration.builder();
+        jedisClientConfiguration.connectTimeout(Duration.ofMillis(0));
+
+        JedisConnectionFactory factory = new JedisConnectionFactory(redisStandaloneConfiguration,
+                jedisClientConfiguration.build());
+        return factory;
     }
 
     @Bean

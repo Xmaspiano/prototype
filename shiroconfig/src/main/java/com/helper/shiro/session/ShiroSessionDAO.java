@@ -1,5 +1,6 @@
 package com.helper.shiro.session;
 
+import com.alibaba.fastjson.JSONObject;
 import com.helper.shiro.util.SerializeUtils;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.UnknownSessionException;
@@ -9,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,16 +19,38 @@ import java.util.Set;
  * @date 2018/9/30 - 上午10:00
  * Created by IntelliJ IDEA.
  */
-public class ShiroSessionDAO extends AbstractSessionDAO {
+public class ShiroSessionDAO extends AbstractSessionDAO{
     private static Logger logger = LoggerFactory.getLogger(ShiroSessionDAO.class);
+    private ObejctManager obejctManager;
     private int expire = 1200;
-
-    ObejctManager obejctManager;
-
     public String keyPrefix = "shiro_redis_session:";
 
     public ShiroSessionDAO(ObejctManager obejctManager){
         this.obejctManager = obejctManager;
+    }
+
+    /**
+     * Subclass implementation hook to actually persist the {@code Session}'s state to the underlying EIS.
+     *
+     * @param session the session object whose state will be propagated to the EIS.
+     */
+//    @Override
+    protected void doUpdate(Session session) {
+        this.saveSession(session);
+    }
+
+    /**
+     * Subclass implementation hook to permanently delete the given Session from the underlying EIS.
+     *
+     * @param session the session instance to permanently delete from the EIS.
+     */
+//    @Override
+    protected void doDelete(Session session) {
+        if (session != null && session.getId() != null) {
+            obejctManager.del(this.getByteKey(session.getId()));
+        } else {
+            logger.error("session or session id is null");
+        }
     }
 
     /**
@@ -44,6 +64,8 @@ public class ShiroSessionDAO extends AbstractSessionDAO {
     protected Serializable doCreate(Session session) {
         Serializable sessionId = this.generateSessionId(session);
         this.assignSessionId(session, sessionId);
+        System.out.println("==123==");
+        System.out.println(JSONObject.toJSON(session));
         this.saveSession(session);
         return sessionId;
     }
@@ -58,13 +80,49 @@ public class ShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     protected Session doReadSession(Serializable sessionId) {
+        System.out.println("doReadSession !!!");
+        System.out.println("obejctManager:"+obejctManager);
         if (sessionId == null) {
             logger.error("session id is null");
             return null;
         } else {
             Session s = (Session) SerializeUtils.deserialize(obejctManager.get(this.getByteKey(sessionId)));
+            System.out.println(s instanceof Session);
             return s;
         }
+    }
+
+    protected void saveSession(Session session) throws UnknownSessionException {
+        if (session != null && session.getId() != null) {
+            System.out.println("=====>>123<<=====");
+            System.out.println(JSONObject.toJSON(session));
+
+            byte[] key = this.getByteKey(session.getId());
+            byte[] value = SerializeUtils.serialize(session);
+
+            session.setTimeout(expire * 1000);
+
+            System.out.println("=====>><<=====");
+            System.out.println(String.valueOf(key)+":"+String.valueOf(value));
+
+            this.obejctManager.set(key, value, expire);
+
+        } else {
+            logger.error("session or session id is null");
+        }
+    }
+
+    public byte[] getByteKey(Serializable sessionId){
+        String preKey = this.keyPrefix + sessionId;
+        return preKey.getBytes();
+    }
+
+    public int getExpire() {
+        return expire;
+    }
+
+    public void setExpire(int expire) {
+        this.expire = expire;
     }
 
     /**
@@ -82,7 +140,7 @@ public class ShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     public void update(Session session) throws UnknownSessionException {
-        this.saveSession(session);
+        doUpdate(session);
     }
 
     /**
@@ -94,11 +152,7 @@ public class ShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     public void delete(Session session) {
-        if (session != null && session.getId() != null) {
-            obejctManager.del(this.getByteKey(session.getId()));
-        } else {
-            logger.error("session or session id is null");
-        }
+        doDelete(session);
     }
 
     /**
@@ -139,37 +193,20 @@ public class ShiroSessionDAO extends AbstractSessionDAO {
 
             while(iterator.hasNext()) {
                 byte[] key = (byte[])iterator.next();
-                Session s = (Session)SerializeUtils.deserialize(obejctManager.get(key));
+                Session s = (Session) SerializeUtils.deserialize(obejctManager.get(key));
                 sessions.add(s);
             }
         }
         return sessions;
     }
 
-    protected void saveSession(Session session) throws UnknownSessionException {
-        if (session != null && session.getId() != null) {
-            byte[] key = this.getByteKey(session.getId());
-            byte[] value = SerializeUtils.serialize(session);
-
-
-            session.setTimeout(expire * 1000);
-
-            this.obejctManager.set(key, value, expire);
-        } else {
-            logger.error("session or session id is null");
-        }
-    }
-
-    public byte[] getByteKey(Serializable sessionId){
-        String preKey = this.keyPrefix + sessionId;
-        return preKey.getBytes();
-    }
-
-    public int getExpire() {
-        return expire;
-    }
-
-    public void setExpire(int expire) {
-        this.expire = expire;
-    }
+//    /**
+//     * Sets the available CacheManager instance on this component.
+//     *
+//     * @param cacheManager the CacheManager instance to set on this component.
+//     */
+//    @Override
+//    public void setCacheManager(ObejctManager cacheManager) {
+//        this.obejctManager = cacheManager;
+//    }
 }

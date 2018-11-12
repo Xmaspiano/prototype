@@ -1,5 +1,8 @@
 package com.helper.shiro.session;
 
+import org.apache.shiro.cache.CacheManager;
+import org.apache.shiro.session.mgt.SessionManager;
+
 import java.util.Set;
 
 /**
@@ -9,7 +12,7 @@ import java.util.Set;
  * @date 2018/9/30 - 上午10:26
  * Created by IntelliJ IDEA.
  */
-public interface ObejctManager {
+public interface ObejctManager{
     byte[] get(byte[] key);
 
     byte[] set(byte[] key, byte[] value);

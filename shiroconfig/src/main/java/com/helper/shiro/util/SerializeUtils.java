@@ -7,11 +7,6 @@ package com.helper.shiro.util;
  * @date 2018/9/30 - 上午8:48
  * Created by IntelliJ IDEA.
  */
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +28,10 @@ public class SerializeUtils {
 
                 try {
                     ObjectInputStream objectInputStream = new ObjectInputStream(byteStream);
-
                     try {
                         result = objectInputStream.readObject();
                     } catch (ClassNotFoundException var5) {
+                        var5.printStackTrace();
                         throw new Exception("Failed to deserialize object type", var5);
                     }
                 } catch (Throwable var6) {
@@ -45,7 +40,6 @@ public class SerializeUtils {
             } catch (Exception var7) {
                 logger.error("Failed to deserialize", var7);
             }
-
             return result;
         }
     }
@@ -66,7 +60,6 @@ public class SerializeUtils {
                     if (!(object instanceof Serializable)) {
                         throw new IllegalArgumentException(SerializeUtils.class.getSimpleName() + " requires a Serializable payload " + "but received an object of type [" + object.getClass().getName() + "]");
                     }
-
                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteStream);
                     objectOutputStream.writeObject(object);
                     objectOutputStream.flush();

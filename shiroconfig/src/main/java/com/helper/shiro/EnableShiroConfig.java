@@ -1,7 +1,6 @@
 package com.helper.shiro;
 
 import com.helper.shiro.config.HelperShiroConfiguration;
-import com.helper.shiro.config.HttpSessionConfig;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.ElementType;

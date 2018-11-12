@@ -26,14 +26,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/login")
 public class LoginController {
-    @Autowired
-    RedisCacheManager redisCacheManager;
+//    @Autowired
+//    RedisCacheManager redisCacheManager;
 
     @Autowired
     DefaultWebSessionManager defaultWebSessionManager;
 
     @PostMapping(value="/in")
-    public Map<String, Object> loginPost(String username, String password, boolean rememberMe,HttpSession httpSession) {
+    public Map<String, Object> loginPost(String username, String password, boolean rememberMe, HttpSession httpSession) {
         Map<String, Object> map = new HashMap<>();
 
         UsernamePasswordToken usernamePasswordToken=new UsernamePasswordToken(username,password,rememberMe);
